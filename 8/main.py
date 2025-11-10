@@ -2,19 +2,23 @@ import numpy as np
 from ABHA import ABHA
 import math
 
-def sphere(x):
-    return -np.sum(math.cos(x)/(x**2))
+def rastrigin_max(x):
+    A = 10
+    return -(A * 2 + np.sum(x**2 - A * np.cos(2 * np.pi * x)))
+
 dim = 5
 bounds = [(-5, 5) for _ in range(dim)]
 
-abha = ABHA(
-    objective_func=sphere,
-    dim=dim,
+bounds = [(-5, 5), (-5, 5)]
+
+# Запуск с визуализацией
+abha_vis = ABHA(
+    objective_func=rastrigin_max,
     bounds=bounds,
-    pop_size=20,
-    max_iter=200
+    pop_size=30,
+    max_iter=120
 )
 
-best_pos, best_val = abha.optimize()
+best_pos, best_val = abha_vis.optimize(visualize=True)
 print("Лучшая позиция:", best_pos)
 print("Лучшее значение:", best_val)
