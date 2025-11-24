@@ -3,15 +3,15 @@ from ABHA import ABHA
 import math
 
 def rastrigin_max(x):
-    A = 10
-    return -(A * 2 + np.sum(x**2 - A * np.cos(2 * np.pi * x)))
+    #A = 10
+    return -(2 + np.sum(x**2 -np.cos(2 * np.pi * x)))
 
 dim = 5
 bounds = [(-5, 5) for _ in range(dim)]
 
 bounds = [(-5, 5), (-5, 5)]
 
-# Запуск с визуализацией
+#new
 abha_vis = ABHA(
     objective_func=rastrigin_max,
     bounds=bounds,
