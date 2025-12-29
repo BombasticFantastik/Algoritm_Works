@@ -2,10 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
-# #def himmelblau(x):
-#     return (x[0]**2 + x[1] - 11)**2 + (x[0] + x[1]**2 - 7)**2
-
-
 def rastrigin(x):
     A = 10
     return A * len(x) + np.sum(x**2 - A * np.cos(2 * np.pi * x))
@@ -22,7 +18,6 @@ def scale(val, in_min, in_max, out_min, out_max, reverse=False):
     res = ((val - in_min) * (out_max - out_min) / (in_max - in_min)) + out_min
     return out_max - (res - out_min) if reverse else res
 
-#обрезка
 def ensure_bounds(x, bounds):
     return np.clip(x, bounds[:, 0], bounds[:, 1])
 
@@ -35,7 +30,6 @@ class Ant:
         self.best_position = self.position.copy()
         self.fitness = -np.inf
         self.best_fitness = -np.inf
-
 
 class ContinuousACO:
     def __init__(self, n_ants=25, dim=2, bounds=None,
@@ -94,6 +88,8 @@ class ContinuousACO:
         range_fit = max_fit - min_fit if max_fit != min_fit else 1.0
         norm_fitnesses = (fitnesses - min_fit) / range_fit
 
+        epsilon = 1e-12
+
         for i in range(self.n_ants):
             scores = np.full(self.n_ants, -np.inf)
             for k in range(self.n_ants):
@@ -106,19 +102,22 @@ class ContinuousACO:
 
             target_idx = np.argmax(scores)
             way_to_goal = distances[i, target_idx]
-            radius_near_goal = way_to_goal * self.pheromone_radius
-            end_way = way_to_goal + radius_near_goal
-
-            x = np.random.uniform(-1.0, 1.0)
-            y = x * x
-            if x > 0:
-                y = scale(y, 0.0, 1.0, way_to_goal, end_way, reverse=False)
-            else:
-                y = scale(y, 0.0, 1.0, 0.0, way_to_goal, reverse=True)
-
-            if way_to_goal == 0:
+            
+            #проверка
+            if way_to_goal < epsilon:
                 direction = np.zeros(self.dim)
+                y = 0
             else:
+                radius_near_goal = way_to_goal * self.pheromone_radius
+                end_way = way_to_goal + radius_near_goal
+
+                x_rnd = np.random.uniform(-1.0, 1.0)
+                y = x_rnd * x_rnd
+                if x_rnd > 0:
+                    y = scale(y, 0.0, 1.0, way_to_goal, end_way, reverse=False)
+                else:
+                    y = scale(y, 0.0, 1.0, 0.0, way_to_goal, reverse=True)
+                
                 direction = (positions_last[target_idx] - positions_last[i]) / way_to_goal
 
             new_pos = positions_last[i] + direction * y
@@ -149,7 +148,6 @@ def main():
     scat = ax.scatter([], [], c='blue', s=40, label='Муравьи')
     best_scat = ax.scatter([], [], c='red', s=120, marker='*', label='Лучшая точка')
 
-    
     x = np.linspace(bounds[0, 0], bounds[0, 1], 150)
     y = np.linspace(bounds[1, 0], bounds[1, 1], 150)
     X, Y = np.meshgrid(x, y)
@@ -157,7 +155,6 @@ def main():
     Z = Z.reshape(X.shape)
     ax.contour(X, Y, Z, levels=20, cmap='Greys', alpha=0.6)
 
-    #инициализация
     aco.prepare(first_time=True)
     for ant in aco.ants:
         ant.fitness = fitness(ant.position)
@@ -173,7 +170,10 @@ def main():
         scat.set_offsets(positions)
         if aco.global_best_position is not None:
             best_scat.set_offsets([aco.global_best_position])
-        current_val = rastrigin(aco.global_best_position) if aco.global_best_position is not None else np.inf
+            current_val = rastrigin(aco.global_best_position)
+        else:
+            current_val = np.inf
+            
         ax.set_xlabel(f'Итерация: {frame + 1} | rastrigin(лучшее) = {current_val:.4f}')
         return scat, best_scat
 
